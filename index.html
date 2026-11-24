@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Обери місце в автобусі</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4efe0;
+    --card: #fbf8ee;
+    --green: #1f5a35;
+    --green-soft: #e3ecd3;
+    --orange: #e0612a;
+    --orange-soft: #f7e0cc;
+    --ink: #1d2a20;
+    --muted: #6b7363;
+    --line: #c9d3b5;
+    --danger: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Manrope, system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+  .tag {
+    display: inline-block; border: 2px solid var(--green); border-radius: 999px;
+    padding: 4px 14px; font-weight: 700; font-size: 12px; letter-spacing: .08em; color: var(--green);
+  }
+  .brand { font-size: 13px; color: var(--muted); margin-left: 8px; }
+  h1 {
+    font-family: Unbounded, sans-serif; font-weight: 800; font-size: clamp(28px, 6vw, 48px);
+    margin: 14px 0 6px; line-height: 1.05; color: var(--green);
+  }
+  h1 span { background: var(--green); color: var(--bg); border-radius: 18px; padding: 0 14px; display: inline-block; transform: rotate(-2deg); }
+  .lead { color: var(--muted); margin: 0 0 22px; }
+
+  .panel {
+    background: var(--card); border: 3px solid var(--green); border-radius: 24px; padding: 22px;
+  }
+  label { display: block; font-weight: 700; font-size: 14px; margin: 0 0 6px; }
+  .hint { font-weight: 400; color: var(--muted); font-size: 12px; }
+  input[type=text] {
+    width: 100%; font: inherit; font-size: 17px; padding: 12px 14px; border-radius: 14px;
+    border: 2px solid var(--line); background: #fff; color: var(--ink); outline: none;
+  }
+  input[type=text]:focus { border-color: var(--green); }
+  .field { margin-bottom: 16px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 520px) { .row2 { grid-template-columns: 1fr; gap: 0; } }
+  .btn {
+    font: inherit; font-weight: 700; font-size: 16px; border: 0; border-radius: 999px;
+    padding: 13px 26px; cursor: pointer; background: var(--orange); color: #fff;
+    box-shadow: 0 3px 0 #a8441b;
+  }
+  .btn:disabled { opacity: .55; cursor: wait; }
+  .btn.ghost { background: transparent; color: var(--green); border: 2px solid var(--green); box-shadow: none; }
+  .err { color: var(--danger); font-size: 14px; min-height: 20px; margin: 4px 0 10px; }
+
+  .who { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .who b { color: var(--green); }
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+  .pill { border-radius: 999px; padding: 4px 12px; border: 2px solid var(--green); background: var(--card); }
+  .pill.free { border-style: dashed; }
+  .pill.taken { background: var(--green-soft); }
+  .pill.count { background: var(--orange); color: #fff; border-color: var(--orange); font-weight: 700; }
+
+  .bus { border: 3px solid var(--green); border-radius: 26px; padding: 16px 14px; background: #f8f6ea; }
+  .bus-head { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--green); margin-bottom: 12px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr 22px 1fr 1fr; gap: 7px; }
+  .seat {
+    display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 4px 8px 4px 4px;
+    border-radius: 12px; border: 2px dashed var(--green); background: var(--card);
+    font: inherit; font-size: 13px; color: var(--ink); text-align: left; cursor: pointer; min-width: 0;
+    transition: transform .08s, background .15s;
+  }
+  .seat .n {
+    flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+    font-weight: 700; font-size: 12px; border: 2px solid var(--green); color: var(--green); background: #fff;
+  }
+  .seat .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-style: italic; }
+  .seat.free:hover { background: var(--orange-soft); border-color: var(--orange); transform: translateY(-1px); }
+  .seat.free:hover .n { border-color: var(--orange); color: var(--orange); }
+  .seat.taken { border-style: solid; background: var(--green-soft); cursor: not-allowed; }
+  .seat.taken .n { background: var(--green); color: #fff; }
+  .seat.taken .t { font-style: normal; color: var(--ink); }
+  .seat.mine { border-style: solid; border-color: var(--orange); background: var(--orange-soft); cursor: default; }
+  .seat.mine .n { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .seat.mine .t { font-style: normal; font-weight: 700; color: var(--ink); }
+  .seat.blocked { opacity: .45; cursor: not-allowed; }
+  .seat:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  .aisle { border-left: 2px dotted var(--line); margin: 0 auto; width: 0; }
+  .door {
+    grid-column: 4 / 6; border: 2px dashed var(--line); border-radius: 12px; display: grid; place-items: center;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--muted);
+    background: repeating-linear-gradient(135deg, transparent 0 8px, rgba(31,90,53,.06) 8px 10px);
+  }
+  .seat.mid { grid-column: 3; padding: 4px; justify-content: center; }
+  .seat.mid .t { display: none; }
+  @media (max-width: 560px) {
+    .grid { gap: 5px; grid-template-columns: 1fr 1fr 14px 1fr 1fr; }
+    .bus { padding: 12px 8px; }
+    .seat { flex-direction: column; gap: 2px; padding: 4px 2px; min-height: 50px; font-size: 10.5px; text-align: center; }
+    .seat .t { max-width: 100%; }
+    .seat .n { width: 24px; height: 24px; font-size: 11px; }
+    .seat.mid { grid-column: 3 / 4; min-height: 50px; padding: 2px 0; }
+    .seat.mid .n { width: 20px; height: 20px; font-size: 10px; }
+    .door { font-size: 9px; }
+  }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(29,42,32,.45); display: none;
+    align-items: center; justify-content: center; padding: 16px; z-index: 10;
+  }
+  .overlay.show { display: flex; }
+  .modal { background: var(--card); border: 3px solid var(--green); border-radius: 24px; padding: 24px; max-width: 380px; width: 100%; text-align: center; }
+  .big { font-family: Unbounded, sans-serif; font-size: 56px; color: var(--orange); line-height: 1; margin: 8px 0; }
+  .modal p { margin: 6px 0 18px; }
+  .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  .done { text-align: center; }
+  .done .big { font-size: 84px; }
+  .demo { background: #fff3c4; border: 2px dashed #c9a400; border-radius: 12px; padding: 8px 12px; font-size: 13px; margin-bottom: 16px; }
+  .hidden { display: none !important; }
+  .loading { text-align: center; color: var(--muted); padding: 30px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div><span class="tag">ПОСАДКА В АВТОБУС</span><span class="brand">Tourism Department · Львівська політехніка</span></div>
+  <h1>Обери своє <span>місце</span></h1>
+  <p class="lead">Кожен учасник може обрати лише одне місце.</p>
+
+  <div id="demoNote" class="demo hidden">Демо-режим: SCRIPT_URL не вказано, бронювання зберігаються лише в цьому браузері.</div>
+
+  <!-- Крок 1: ім'я -->
+  <section id="stepName" class="panel">
+    <form id="nameForm" novalidate>
+      <div class="row2">
+        <div class="field">
+          <label for="first">Ім'я <span class="hint">латиницею</span></label>
+          <input id="first" type="text" autocomplete="given-name" placeholder="Sofiia" maxlength="40" required>
+        </div>
+        <div class="field">
+          <label for="last">Прізвище <span class="hint">латиницею</span></label>
+          <input id="last" type="text" autocomplete="family-name" placeholder="Kholod" maxlength="40" required>
+        </div>
+      </div>
+      <div class="err" id="nameErr" role="alert"></div>
+      <button class="btn" id="nameBtn" type="submit">Далі — вибір місця →</button>
+    </form>
+  </section>
+
+  <!-- Крок 2: схема автобуса -->
+  <section id="stepSeat" class="hidden">
+    <div class="who">
+      <div>Ти: <b id="whoName"></b> · <a href="#" id="changeName" style="color:var(--green)">змінити</a></div>
+      <div class="legend">
+        <span class="pill free">Вільне</span>
+        <span class="pill taken">Зайняте</span>
+        <span class="pill count" id="counter">…</span>
+      </div>
+    </div>
+    <div class="err" id="seatErr" role="alert"></div>
+    <div class="bus">
+      <div class="bus-head"><span>🛞 ВОДІЙ</span><span>↑ ПЕРЕД АВТОБУСА</span></div>
+      <div class="grid" id="grid"><div class="loading" style="grid-column:1/-1">Завантаження місць…</div></div>
+    </div>
+  </section>
+
+  <!-- Крок 3: готово -->
+  <section id="stepDone" class="panel done hidden">
+    <div>Твоє місце</div>
+    <div class="big" id="doneSeat"></div>
+    <p id="doneText"></p>
+    <button class="btn ghost" id="showBus" type="button">Показати на схемі</button>
+  </section>
+</div>
+
+<div class="overlay" id="confirm" role="dialog" aria-modal="true" aria-labelledby="cTitle">
+  <div class="modal">
+    <div id="cTitle">Підтверди вибір</div>
+    <div class="big" id="cSeat"></div>
+    <p>Змінити місце потім самостійно не вийде.</p>
+    <div class="actions">
+      <button class="btn ghost" id="cNo" type="button">Скасувати</button>
+      <button class="btn" id="cYes" type="button">Так, це моє місце</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== НАЛАШТУВАННЯ =====
+// Встав сюди URL веб-застосунку з Google Apps Script (закінчується на /exec)
+const SCRIPT_URL = '';
+const SHOW_NAMES = true; // показувати імена на зайнятих місцях
+// ========================
+
+// Розташування як у PDF: [ліве1, ліве2, праве1, праве2]; 'door' — двері; 'skip' — продовження дверей
+const LAYOUT = [
+  [1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 'door:ПЕРЕДНІ ДВЕРІ'],
+  [11, 12, 13, 14], [15, 16, 17, 18], [19, 20, 21, 22], [23, 24, 25, 26],
+  [27, 28, 29, 30], [31, 32, 33, 34], [35, 36, 'door2:СЕРЕДНІ ДВЕРІ'], [37, 38, 'skip'],
+  [41, 42, 39, 40], [43, 44, 45, 46], [47, 48, 49, 50], [51, 52, 53, 54],
+  [55, 56, 57, 58], [59, 60, 61, 62], [63, 64, 66, 67, 65],
+];
+const TOTAL = 67;
+
+const $ = id => document.getElementById(id);
+const state = { first: '', last: '', taken: new Map(), blocked: [], mySeat: null, pending: null };
+const LS_KEY = 'busSeat.me';
+
+// ----- API -----
+let demoMem = [];
+const demoDB = {
+  load() { try { return JSON.parse(localStorage.getItem('busSeat.demo') || '[]'); } catch { return demoMem.slice(); } },
+  save(rows) { demoMem = rows.slice(); try { localStorage.setItem('busSeat.demo', JSON.stringify(rows)); } catch {} },
+};
+const keyOf = (f, l) => (l + '|' + f).toLowerCase();
+const pub = rows => rows.map(r => ({ seat: r.seat, name: r.last + ' ' + r.first }));
+
+async function apiGet() {
+  if (!SCRIPT_URL) return { ok: true, blocked: [], taken: pub(demoDB.load()) };
+  const r = await fetch(SCRIPT_URL, { method: 'GET' });
+  return r.json();
+}
+async function apiPost(body) {
+  if (!SCRIPT_URL) {
+    const rows = demoDB.load();
+    const mine = rows.find(r => keyOf(r.first, r.last) === keyOf(body.first, body.last));
+    if (body.action === 'check') return { ok: true, seat: mine ? mine.seat : null, taken: pub(rows) };
+    if (mine) return { ok: false, error: 'already', seat: mine.seat, taken: pub(rows) };
+    if (rows.some(r => r.seat === body.seat)) return { ok: false, error: 'taken', taken: pub(rows) };
+    rows.push({ seat: body.seat, first: body.first, last: body.last }); demoDB.save(rows);
+    return { ok: true, seat: body.seat, taken: pub(rows) };
+  }
+  // text/plain — щоб уникнути CORS preflight, який Apps Script не підтримує
+  const r = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  return r.json();
+}
+
+// ----- Ім'я -----
+function cleanName(s) {
+  s = s.trim().replace(/\s+/g, ' ');
+  if (!/^[A-Za-z][A-Za-z' -]{0,39}$/.test(s)) return null;
+  return s.split(/([ -])/).map(p => /[A-Za-z]/.test(p) ? p[0].toUpperCase() + p.slice(1).toLowerCase() : p).join('');
+}
+
+$('nameForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = cleanName($('first').value), l = cleanName($('last').value);
+  if (!f || !l) {
+    $('nameErr').textContent = /[А-Яа-яЇїІіЄєҐґ]/.test($('first').value + $('last').value)
+      ? 'Будь ласка, пиши латиницею (напр. Sofiia Kholod), не кирилицею.'
+      : "Введи ім'я та прізвище латинськими літерами.";
+    return;
+  }
+  $('nameErr').textContent = '';
+  $('nameBtn').disabled = true; $('nameBtn').textContent = 'Перевіряю…';
+  try {
+    const res = await apiPost({ action: 'check', first: f, last: l });
+    if (!res.ok) throw new Error(res.error);
+    state.first = f; state.last = l;
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ first: f, last: l })); } catch {}
+    setTaken(res.taken);
+    if (res.seat) { state.mySeat = res.seat; showDone(true); }
+    else showSeats();
+  } catch (err) {
+    $('nameErr').textContent = "Не вдалося з'єднатися з сервером. Спробуй ще раз.";
+  } finally {
+    $('nameBtn').disabled = false; $('nameBtn').textContent = 'Далі — вибір місця →';
+  }
+});
+
+$('changeName').addEventListener('click', e => {
+  e.preventDefault();
+  state.mySeat = null;
+  try { localStorage.removeItem(LS_KEY); } catch {}
+  show('stepName');
+});
+
+// ----- Схема -----
+function setTaken(list) {
+  state.taken = new Map((list || []).map(t => [Number(t.seat), t.name]));
+}
+
+function seatEl(n, extra) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'seat' + (extra ? ' ' + extra : '');
+  const name = state.taken.get(n);
+  const mine = state.mySeat === n;
+  const blocked = state.blocked.includes(n);
+  let text = 'вільне';
+  if (mine) { b.classList.add('mine'); text = state.last + ' ' + state.first; }
+  else if (name !== undefined) { b.classList.add('taken'); text = SHOW_NAMES ? name : 'зайняте'; b.disabled = true; }
+  else if (blocked) { b.classList.add('blocked'); text = 'недоступне'; b.disabled = true; }
+  else if (state.mySeat) { b.classList.add('free'); b.disabled = true; b.style.cursor = 'default'; }
+  else { b.classList.add('free'); b.addEventListener('click', () => askConfirm(n)); }
+  b.setAttribute('aria-label', 'Місце ' + n + ', ' + text);
+  b.innerHTML = '<span class="n">' + n + '</span><span class="t"></span>';
+  b.querySelector('.t').textContent = text;
+  b.title = 'Місце ' + n + ' — ' + text;
+  return b;
+}
+
+function renderBus() {
+  const g = $('grid'); g.innerHTML = '';
+  LAYOUT.forEach(row => {
+    const [a, b, c, d, mid] = row;
+    g.append(seatEl(a), seatEl(b));
+    if (mid) g.append(seatEl(mid, 'mid'));
+    else { const ai = document.createElement('div'); ai.className = 'aisle'; g.append(ai); }
+    if (typeof c === 'string') {
+      if (c === 'skip') return;
+      const door = document.createElement('div');
+      door.className = 'door';
+      door.textContent = '🚪 ' + c.split(':')[1];
+      if (c.startsWith('door2')) door.style.gridRow = 'span 2';
+      g.append(door);
+    } else g.append(seatEl(c), seatEl(d));
+  });
+  const free = TOTAL - state.taken.size - state.blocked.filter(n => !state.taken.has(n)).length;
+  $('counter').textContent = 'Вільно ' + free + ' з ' + TOTAL;
+}
+
+async function showSeats() {
+  $('whoName').textContent = state.first + ' ' + state.last;
+  $('seatErr').textContent = '';
+  show('stepSeat');
+  renderBus();
+}
+
+function show(id) {
+  ['stepName', 'stepSeat', 'stepDone'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+}
+
+// ----- Підтвердження -----
+function askConfirm(n) {
+  state.pending = n;
+  $('cSeat').textContent = n;
+  $('confirm').classList.add('show');
+  $('cYes').focus();
+}
+function closeConfirm() { $('confirm').classList.remove('show'); state.pending = null; }
+$('cNo').addEventListener('click', closeConfirm);
+$('confirm').addEventListener('click', e => { if (e.target === $('confirm')) closeConfirm(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConfirm(); });
+
+$('cYes').addEventListener('click', async () => {
+  const seat = state.pending;
+  $('cYes').disabled = true; $('cYes').textContent = 'Зберігаю…';
+  try {
+    const res = await apiPost({ first: state.first, last: state.last, seat });
+    if (res.taken) setTaken(res.taken);
+    closeConfirm();
+    if (res.ok) { state.mySeat = res.seat; showDone(false); }
+    else if (res.error === 'already') { state.mySeat = res.seat; showDone(true); }
+    else if (res.error === 'taken') { $('seatErr').textContent = 'Хтось щойно зайняв місце ' + seat + '. Обери інше.'; renderBus(); }
+    else if (res.error === 'busy') { $('seatErr').textContent = 'Сервер зайнятий, спробуй ще раз за кілька секунд.'; }
+    else { $('seatErr').textContent = 'Помилка: ' + res.error; }
+  } catch (err) {
+    closeConfirm();
+    $('seatErr').textContent = "Не вдалося з'єднатися з сервером. Спробуй ще раз.";
+  } finally {
+    $('cYes').disabled = false; $('cYes').textContent = 'Так, це моє місце';
+  }
+});
+
+function showDone(existing) {
+  $('doneSeat').textContent = state.mySeat;
+  $('doneText').textContent = existing
+    ? state.first + ' ' + state.last + ', ти вже обрав(-ла) це місце раніше. Обрати можна лише одне.'
+    : 'Готово, ' + state.first + '! Місце ' + state.mySeat + ' закріплене за тобою. До зустрічі в автобусі!';
+  show('stepDone');
+}
+$('showBus').addEventListener('click', async () => {
+  try { const r = await apiGet(); if (r.ok) { setTaken(r.taken); state.blocked = r.blocked || []; } } catch {}
+  showSeats();
+});
+
+// ----- Старт -----
+(async function init() {
+  if (!SCRIPT_URL) $('demoNote').classList.remove('hidden');
+  try { const r = await apiGet(); if (r.ok) { setTaken(r.taken); state.blocked = r.blocked || []; } } catch {}
+  try {
+    const me = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (me && me.first && me.last) { $('first').value = me.first; $('last').value = me.last; }
+  } catch {}
+})();
+</script>
+</body>
+</html>
