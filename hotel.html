@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Поселення — хто з ким живе</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Onest:wght@400;500;600;700&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F0E1; --card: #FBF8EE; --green: #1E5631; --green-dk: #143D22; --ink: #17351F;
+    --muted: #3F6B48; --orange: #D65F1C; --orange-dk: #9E4313; --peach: #F8DCC4; --mint: #DDEBC9;
+    --free: #5E9A3A; --free-ink: #2F6B1F; --danger: #B3261E;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: Onest, system-ui, sans-serif; }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  .page { padding: 32px 16px 56px; }
+  .wrap { max-width: 1360px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+  .nav { display: inline-flex; gap: 6px; background: var(--card); border: 2px solid var(--green); border-radius: 999px; padding: 4px; align-self: flex-start; }
+  .nav a { min-height: 40px; padding: 0 18px; border-radius: 999px; display: inline-flex; align-items: center; font: 700 14px Onest, sans-serif; color: var(--green); text-decoration: none; }
+  .nav a.on { background: var(--green); color: var(--bg); }
+
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; }
+  .h-left { display: flex; flex-direction: column; gap: 18px; }
+  .brandline { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+  .tag { border: 2px solid var(--green); border-radius: 999px; padding: 6px 16px; font: 700 13px Onest, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .dept { font: 800 15px Unbounded, sans-serif; letter-spacing: .02em; }
+  h1 { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; font: 800 clamp(36px, 6vw, 72px)/1 Unbounded, sans-serif; color: var(--green); text-transform: uppercase; }
+  h1 span { background: var(--green); color: var(--bg); border-radius: 999px; padding: 8px 32px 14px; transform: rotate(-2deg); box-shadow: 0 6px 0 var(--green-dk); display: inline-block; }
+  .hand { margin: 0; font: 700 28px/1.1 Caveat, cursive; color: #C2541A; }
+  .h-right { display: flex; flex-direction: column; align-items: flex-end; gap: 14px; }
+  .tabs { display: flex; gap: 6px; background: var(--card); border: 2px solid var(--green); border-radius: 999px; padding: 4px; }
+  .tabs button { min-height: 44px; padding: 0 20px; border-radius: 999px; border: 0; background: transparent; color: var(--green); font: 700 15px Onest, sans-serif; }
+  .tabs button[aria-pressed="true"] { background: var(--green); color: var(--bg); }
+  .pills { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+  .pill { display: flex; align-items: center; gap: 8px; border: 2px solid var(--green); border-radius: 999px; padding: 6px 14px 6px 8px; font: 600 14px Onest, sans-serif; }
+  .pill .dot { width: 16px; height: 16px; border-radius: 50%; }
+  .pill.free { border: 2px dashed var(--free); background: var(--card); }
+  .pill.free .dot { width: 14px; height: 14px; border: 2px solid var(--free); }
+  .pill.count { border: 0; padding: 8px 18px; background: var(--orange); color: #fff; font-weight: 700; box-shadow: 0 4px 0 var(--orange-dk); }
+  @media (max-width: 700px) { .h-right { align-items: flex-start; } .pills { justify-content: flex-start; } .h-right > svg { display: none; } }
+
+  .main { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+  .plan { flex: 999 1 640px; min-width: 0; background: var(--card); border: 2px solid var(--green); border-radius: 28px; box-shadow: 0 8px 0 var(--green); padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+  @media (max-width: 520px) { .plan { padding: 14px; border-radius: 22px; } }
+  .plan-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font: 700 13px Onest, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .plan-head span:last-child { color: var(--muted); }
+  .rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+  @media (max-width: 440px) { .rooms { grid-template-columns: 1fr; } }
+  .room { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 20px; border: 2px solid var(--green); background: #fff; }
+  .room.full { background: #EFEADA; }
+  .room.sel { border: 3px solid var(--orange); background: #FFF4EA; }
+  .room-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .room-head .t { display: flex; align-items: center; gap: 6px; }
+  .room-head .lbl { font: 700 11px Onest, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .room-head .num { font: 800 22px Unbounded, sans-serif; color: var(--green); }
+  .room-head .meta { font: 600 12px Onest, sans-serif; color: var(--muted); }
+  .bed { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 4px 12px 4px 5px; border-radius: 999px; text-align: left; }
+  .bed.taken { border: 2px solid var(--green); background: var(--mint); }
+  .bed.taken .n { width: 30px; height: 30px; background: var(--green); color: #fff; }
+  .bed.taken.me { background: #FFD2B3; }
+  .bed.taken.me .n { background: var(--orange); }
+  .bed .n { flex: none; border-radius: 50%; display: grid; place-items: center; font: 700 13px Onest, sans-serif; }
+  .bed .nm { font: 600 14px/1.2 Onest, sans-serif; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bed.free { border: 2px dashed var(--free); background: transparent; }
+  .bed.free .n { width: 26px; height: 26px; border: 2px solid var(--free); color: var(--free-ink); font-size: 12px; }
+  .bed.free .nm { font: 700 19px/1 Caveat, cursive; color: var(--free-ink); }
+  .bed.free:hover:not(:disabled) { background: #F2F8EA; }
+  .bed.free.on { border-color: var(--orange); background: #FFE9D9; }
+  .bed.free.on .n { border-color: var(--orange); color: #B4491A; }
+  .bed.free.on .nm { color: #B4491A; }
+  .bed.free:disabled { cursor: default; opacity: .55; }
+  .divider { display: flex; align-items: center; gap: 12px; }
+  .divider span { flex: 1; border-top: 2px dashed #8DBA6A; }
+  .plan-note { align-self: center; text-align: center; font: 700 12px Onest, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+  aside { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+  .card-how { background: var(--green); color: var(--bg); border-radius: 28px; box-shadow: 0 8px 0 var(--green-dk); padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+  .card-how .ill { border-radius: 20px; overflow: hidden; background: #174A29; line-height: 0; }
+  .kicker { font: 700 13px Onest, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  h2 { margin: 0; font: 800 26px/1.15 Unbounded, sans-serif; }
+  .card-how ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; line-height: 1.45; }
+  .card-pick { background: var(--card); border: 2px solid var(--green); border-radius: 28px; box-shadow: 0 8px 0 var(--green); padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+  .card-pick h2 { font-size: 24px; color: var(--green); }
+  .x { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--green); background: transparent; display: grid; place-items: center; }
+  .mate { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 14px 4px 5px; border-radius: 999px; border: 2px solid var(--green); background: var(--mint); }
+  .mate .av { width: 36px; height: 36px; flex: none; border-radius: 50%; background: var(--green); color: #fff; display: grid; place-items: center; font: 700 13px Onest, sans-serif; }
+  .mate .nm { flex: 1; min-width: 0; font: 600 15px Onest, sans-serif; }
+  .mate .bd { font: 600 12px Onest, sans-serif; color: var(--muted); }
+  .empty { margin: 0; padding: 14px 16px; border: 2px dashed #8DBA6A; border-radius: 18px; font-size: 15px; line-height: 1.45; }
+  .boxes { display: flex; gap: 10px; }
+  .box { flex: 1; border: 2px solid var(--green); border-radius: 18px; padding: 10px 14px; }
+  .box .k { font: 700 11px Onest, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .box .v { font: 800 24px Unbounded, sans-serif; }
+  label { font: 700 13px Onest, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+  label small { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--muted); }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fields div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  input[type=text] { width: 100%; min-height: 48px; padding: 0 16px; border: 2px solid var(--green); border-radius: 999px; background: #fff; font: 500 16px Onest, sans-serif; color: var(--ink); }
+  .err { color: var(--danger); font-size: 14px; min-height: 0; margin: 0; }
+  .err:empty { display: none; }
+  .btn-book { min-height: 56px; border: 0; border-radius: 999px; background: var(--orange); color: #fff; font: 800 16px Unbounded, sans-serif; text-transform: uppercase; box-shadow: 0 5px 0 var(--orange-dk); }
+  .btn-book:disabled { opacity: .6; cursor: wait; }
+  .card-done { background: var(--orange); color: #fff; border-radius: 28px; box-shadow: 0 8px 0 var(--orange-dk); padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+  .card-done h2 { font-size: 28px; line-height: 1.1; }
+  .card-done p { margin: 0; font-size: 16px; line-height: 1.5; }
+  .card-done button { align-self: flex-start; min-height: 44px; padding: 0 20px; border: 2px solid #fff; border-radius: 999px; background: transparent; color: #fff; font: 700 15px Onest, sans-serif; }
+  .card-note { background: var(--peach); border: 2px solid var(--green); border-radius: 22px; padding: 16px 18px; display: flex; gap: 12px; align-items: flex-start; }
+  .card-note p { margin: 0; font: 600 14px/1.45 Onest, sans-serif; }
+  .banner { border-radius: 14px; padding: 10px 14px; font-size: 14px; }
+  .banner.demo { background: #fff3c4; border: 2px dashed #c9a400; }
+  .banner.bad { background: #fde3e1; border: 2px solid var(--danger); }
+  footer { font: 600 14px Onest, sans-serif; color: var(--green); }
+  .hidden { display: none !important; }
+  .loading { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 30px 0; }
+</style>
+</head>
+<body>
+<div class="page"><div class="wrap">
+
+  <nav class="nav" aria-label="Розділи">
+    <a href="./">Автобус</a>
+    <a href="./hotel.html" class="on" aria-current="page">Готель</a>
+  </nav>
+
+  <div id="demoNote" class="banner demo hidden">Демо-режим: бронювання зберігаються лише в цьому браузері.</div>
+  <div id="badNote" class="banner bad hidden"></div>
+
+  <header>
+    <div class="h-left">
+      <div class="brandline">
+        <span class="tag">Поселення · <span id="city"></span></span>
+        <span class="dept">TOURISM DEPARTMENT</span>
+        <span style="font-size:14px;font-weight:500">· Львівська політехніка</span>
+      </div>
+      <h1>Хто з ким <span>живе</span></h1>
+      <p class="hand">Обирай не кімнату — обирай сусідів!</p>
+    </div>
+    <div class="h-right">
+      <svg width="300" height="78" viewBox="0 0 300 78" fill="none" aria-hidden="true">
+        <path d="M8 66 C 60 30, 110 78, 160 46 S 230 18, 252 34" stroke="#1E5631" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="1 8"/>
+        <path d="M256 6c-9 0-15 6.5-15 14.5C241 31 256 44 256 44s15-13 15-23.5C271 12.5 265 6 256 6z" fill="#D65F1C" stroke="#9E4313" stroke-width="2"/>
+        <circle cx="256" cy="20" r="5" fill="#F5F0E1"/>
+        <path d="M288 40 Q288 50 298 50 Q288 50 288 60 Q288 50 278 50 Q288 50 288 40Z" fill="#1E5631"/>
+        <path d="M30 14 Q30 21 37 21 Q30 21 30 28 Q30 21 23 21 Q30 21 30 14Z" fill="#6FAE45"/>
+        <circle cx="120" cy="22" r="3" fill="#D65F1C"/>
+      </svg>
+      <div class="tabs" id="tabs" role="group" aria-label="Групи кімнат"></div>
+      <div class="pills">
+        <span class="pill" style="background:var(--mint)"><span class="dot" style="background:var(--green)"></span>Зайнято · <b id="stTaken">0</b></span>
+        <span class="pill free"><span class="dot"></span>Вільні · <b id="stFree">0</b></span>
+        <span class="pill count" id="stCount">…</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="main">
+    <section class="plan" aria-label="План поверху">
+      <div class="plan-head"><span id="floorLabel"></span><span>Натисни на пунктирне місце</span></div>
+      <div class="rooms" id="topRooms"><div class="loading">Завантаження кімнат…</div></div>
+      <div class="divider" aria-hidden="true">
+        <span></span>
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 2 Q12 12 22 12 Q12 12 12 22 Q12 12 2 12 Q12 12 12 2Z" fill="#6FAE45"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="#D65F1C"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 2 Q12 12 22 12 Q12 12 12 22 Q12 12 2 12 Q12 12 12 2Z" fill="#1E5631"/></svg>
+        <span></span>
+      </div>
+      <div class="rooms" id="bottomRooms"></div>
+      <div class="plan-note">План умовний · реальний номер кімнати видадуть на рецепції</div>
+    </section>
+
+    <aside>
+      <!-- Як це працює -->
+      <div class="card-how" id="cardHow">
+        <div class="ill">
+          <svg viewBox="0 0 320 150" width="100%" role="img" aria-label="Ілюстрація: нічні гори під місяцем">
+            <rect width="320" height="150" fill="#174A29"/>
+            <circle cx="250" cy="42" r="22" fill="#F5F0E1"/><circle cx="261" cy="35" r="20" fill="#174A29"/>
+            <path d="M60 18 Q60 28 70 28 Q60 28 60 38 Q60 28 50 28 Q60 28 60 18Z" fill="#CFE5B4"/>
+            <path d="M150 40 Q150 46 156 46 Q150 46 150 52 Q150 46 144 46 Q150 46 150 40Z" fill="#CFE5B4"/>
+            <path d="M200 14 Q200 19 205 19 Q200 19 200 24 Q200 19 195 19 Q200 19 200 14Z" fill="#F6B987"/>
+            <path d="M0 150V108L58 68L104 100L168 50L226 98L276 72L320 94V150Z" fill="#2F7A3E"/>
+            <path d="M168 50L182 62L172 60L164 66L156 60Z" fill="#F5F0E1"/>
+            <path d="M0 150V130L72 100L140 126L212 96L320 132V150Z" fill="#6FAE45"/>
+            <ellipse cx="160" cy="172" rx="130" ry="42" fill="#A8D07A"/>
+            <g transform="translate(118 112)"><circle cx="14" cy="10" r="9" fill="#F8DCC4" stroke="#143D22" stroke-width="2"/><path d="M0 38c0-10 6-17 14-17s14 7 14 17Z" fill="#D65F1C" stroke="#143D22" stroke-width="2"/></g>
+            <g transform="translate(158 108)"><circle cx="14" cy="10" r="9" fill="#F8DCC4" stroke="#143D22" stroke-width="2"/><path d="M0 42c0-12 6-19 14-19s14 7 14 19Z" fill="#1E5631" stroke="#143D22" stroke-width="2"/></g>
+          </svg>
+        </div>
+        <span class="kicker" style="color:#CFE5B4">Як це працює</span>
+        <h2>Подивись, хто вже живе в номері</h2>
+        <ol>
+          <li>Знайди друзів на плані — імена видно одразу.</li>
+          <li>Натисни на пунктирне «вільне» місце поруч із ними.</li>
+          <li>Впиши ім'я та прізвище латиницею і займи місце.</li>
+        </ol>
+        <p style="margin:0;font:700 22px Caveat,cursive;color:#F6B987">Кожен може обрати лише одне місце!</p>
+      </div>
+
+      <!-- Вибір -->
+      <div class="card-pick hidden" id="cardPick">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <span class="tag" style="font-size:12px;padding:5px 14px" id="pickTag"></span>
+          <button type="button" class="x" id="pickClose" aria-label="Скасувати вибір">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E5631" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <h2 id="pickTitle"></h2>
+        <div id="pickMates" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div class="boxes">
+          <div class="box" style="background:var(--mint)"><div class="k" style="color:#2E5A36">Ще вільно</div><div class="v" style="color:var(--green)" id="pickFree"></div></div>
+          <div class="box" style="background:var(--peach)"><div class="k" style="color:#7A3410">Усього місць</div><div class="v" style="color:#B4491A" id="pickCap"></div></div>
+        </div>
+        <form id="bookForm" novalidate style="display:flex;flex-direction:column;gap:14px">
+          <div class="fields">
+            <div><label for="first">Ім'я <small>латиницею</small></label><input id="first" type="text" autocomplete="given-name" placeholder="Sofiia" maxlength="40"></div>
+            <div><label for="last">Прізвище <small>латиницею</small></label><input id="last" type="text" autocomplete="family-name" placeholder="Kholod" maxlength="40"></div>
+          </div>
+          <p class="err" id="bookErr" role="alert"></p>
+          <button type="submit" class="btn-book" id="bookBtn">Займаю місце</button>
+        </form>
+      </div>
+
+      <!-- Готово -->
+      <div class="card-done hidden" id="cardDone">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="kicker" style="color:#FFE3CF">Місце твоє</span>
+          <svg width="72" height="36" viewBox="0 0 72 36" aria-hidden="true"><path d="M12 4 Q12 16 24 16 Q12 16 12 28 Q12 16 0 16 Q12 16 12 4Z" fill="#FFE3CF"/><path d="M44 0 Q44 8 52 8 Q44 8 44 16 Q44 8 36 8 Q44 8 44 0Z" fill="#fff"/><path d="M62 18 Q62 24 68 24 Q62 24 62 30 Q62 24 56 24 Q62 24 62 18Z" fill="#FFE3CF"/></svg>
+        </div>
+        <h2 id="doneTitle"></h2>
+        <p id="doneText"></p>
+        <button type="button" id="doneOther">Це не я — інша людина</button>
+      </div>
+
+      <div class="card-note">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E5631" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:2px"><circle cx="8" cy="8" r="4"/><path d="M11 11l9 9M16 16l2-2M18 18l2-2"/></svg>
+        <p>Кімнати на плані умовні: реальні номери, поверхи й планування готелю можуть відрізнятися. Ми зберігаємо саме твоїх сусідів, а номер кімнати видадуть на рецепції при заселенні. Щоб змінити місце, напиши організаторам.</p>
+      </div>
+    </aside>
+  </div>
+
+  <footer>Tourism Department · Гори, міста і ти!</footer>
+</div></div>
+
+<script>
+// ===== НАЛАШТУВАННЯ =====
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWVsLymy9tAvON8sxWzftydS732T8ZNjW05waz4bOJZVzpkdCNvFK_W2_gCTinuHWK/exec';
+const HOTEL_CITY = 'Брашов';
+const SHOW_NAMES = true;
+// Кімнати: [номер, кількість ліжок]. Має збігатися з HOTEL_ROOMS у Code.gs.
+const FLOORS = [
+  { label: 'Кімнати 1–10',
+    top:    [['1', 2], ['2', 3], ['3', 4], ['4', 2], ['5', 3]],
+    bottom: [['6', 4], ['7', 2], ['8', 3], ['9', 3], ['10', 2]] },
+  { label: 'Кімнати 11–20',
+    top:    [['11', 3], ['12', 2], ['13', 4], ['14', 2], ['15', 3]],
+    bottom: [['16', 3], ['17', 4], ['18', 2], ['19', 3], ['20', 2]] },
+];
+// ========================
+
+const DEMO = !SCRIPT_URL || new URLSearchParams(location.search).has('demo');
+const $ = id => document.getElementById(id);
+const ME_KEY = 'busSeat.me';            // спільне з автобусом: ім'я підставляється автоматично
+const MY_HOTEL = 'hotelBed.me';
+const state = { floor: 0, taken: new Map(), sel: null, mine: null };
+const ALL = FLOORS.flatMap(f => f.top.concat(f.bottom));
+const TOTAL = ALL.reduce((s, r) => s + r[1], 0);
+const k = (room, bed) => room + '#' + bed;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const lsGet = key => { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } };
+const lsSet = (key, v) => { try { v == null ? localStorage.removeItem(key) : localStorage.setItem(key, JSON.stringify(v)); } catch {} };
+
+// ----- API -----
+let demoMem = [];
+const demoDB = {
+  load() { try { return JSON.parse(localStorage.getItem('hotel.demo') || '[]'); } catch { return demoMem.slice(); } },
+  save(r) { demoMem = r.slice(); try { localStorage.setItem('hotel.demo', JSON.stringify(r)); } catch {} },
+};
+const pub = rows => rows.map(r => ({ room: r.room, bed: r.bed, name: r.last + ' ' + r.first }));
+async function apiGet() {
+  if (DEMO) return { ok: true, rooms: {}, taken: pub(demoDB.load()) };
+  const r = await fetch(SCRIPT_URL + '?kind=hotel');
+  return r.json();
+}
+async function apiPost(body) {
+  body.kind = 'hotel';
+  if (DEMO) {
+    const rows = demoDB.load(), key = (body.last + '|' + body.first).toLowerCase();
+    const mine = rows.find(r => (r.last + '|' + r.first).toLowerCase() === key);
+    if (body.action === 'check') return { ok: true, room: mine ? mine.room : null, bed: mine ? mine.bed : null, taken: pub(rows) };
+    if (mine) return { ok: false, error: 'already', room: mine.room, bed: mine.bed, taken: pub(rows) };
+    if (rows.some(r => r.room === body.room && r.bed === body.bed)) return { ok: false, error: 'taken', taken: pub(rows) };
+    rows.push({ room: body.room, bed: body.bed, first: body.first, last: body.last }); demoDB.save(rows);
+    return { ok: true, room: body.room, bed: body.bed, taken: pub(rows) };
+  }
+  const r = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  return r.json();
+}
+function setTaken(list) { state.taken = new Map((list || []).map(t => [k(String(t.room), Number(t.bed)), t.name])); }
+
+// ----- Ім'я -----
+function cleanName(s) {
+  s = s.trim().replace(/\s+/g, ' ');
+  if (!/^[A-Za-z][A-Za-z' -]{0,39}$/.test(s)) return null;
+  return s.split(/([ -])/).map(p => /[A-Za-z]/.test(p) ? p[0].toUpperCase() + p.slice(1).toLowerCase() : p).join('');
+}
+const initials = n => n.split(' ').map(p => p.charAt(0)).join('').slice(0, 2).toUpperCase();
+const places = n => n === 1 ? 'місце' : (n < 5 ? 'місця' : 'місць');
+
+// ----- Рендер -----
+const BED_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E5631" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6v12M3 14h18v4M21 14v-3a2 2 0 0 0-2-2h-8v5"/><circle cx="7" cy="11" r="2"/></svg>';
+
+function roomHTML([num, cap]) {
+  const s = state.sel, selHere = s && s.room === num && !state.mine;
+  let free = 0, beds = '';
+  for (let b = 1; b <= cap; b++) {
+    const name = state.taken.get(k(num, b));
+    const isMe = state.mine && state.mine.room === num && state.mine.bed === b;
+    if (name !== undefined || isMe) {
+      const shown = isMe ? (name || 'Ти') + ' (ти)' : (SHOW_NAMES ? name : 'зайнято');
+      beds += `<div class="bed taken${isMe ? ' me' : ''}"><span class="n">${b}</span><span class="nm">${esc(shown)}</span></div>`;
+    } else {
+      free++;
+      const on = selHere && s.bed === b;
+      beds += `<button type="button" class="bed free${on ? ' on' : ''}" data-room="${num}" data-bed="${b}" aria-pressed="${on}"${state.mine ? ' disabled' : ''} aria-label="Кімната ${num}, ліжко ${b}, вільне"><span class="n">${b}</span><span class="nm">${on ? 'обрано' : 'вільне'}</span></button>`;
+    }
+  }
+  const cls = selHere ? ' sel' : (free === 0 ? ' full' : '');
+  return `<article class="room${cls}"><div class="room-head"><span class="t">${BED_ICON}<span class="lbl">Кімната</span><span class="num">${num}</span></span><span class="meta">${cap} ${places(cap)} · ${free ? free + ' вільн.' : 'зайнято'}</span></div>${beds}</article>`;
+}
+
+function render() {
+  const f = FLOORS[state.floor];
+  $('tabs').innerHTML = FLOORS.map((fl, i) => `<button type="button" data-floor="${i}" aria-pressed="${i === state.floor}">${fl.label}</button>`).join('');
+  $('floorLabel').textContent = f.label + ' · умовний план';
+  $('topRooms').innerHTML = f.top.map(roomHTML).join('');
+  $('bottomRooms').innerHTML = f.bottom.map(roomHTML).join('');
+  const taken = [...state.taken.keys()].filter(key => ALL.some(([n, c]) => { const [r, b] = key.split('#'); return r === n && +b <= c; })).length;
+  $('stTaken').textContent = taken;
+  $('stFree').textContent = TOTAL - taken;
+  $('stCount').textContent = taken + ' з ' + TOTAL + ' місць';
+  renderAside();
+}
+
+function renderAside() {
+  const show = id => ['cardHow', 'cardPick', 'cardDone'].forEach(c => $(c).classList.toggle('hidden', c !== id));
+  if (state.mine) {
+    const { room, bed } = state.mine;
+    const cap = (ALL.find(r => r[0] === room) || [0, 0])[1];
+    const names = [];
+    for (let b = 1; b <= cap; b++) if (b !== bed && state.taken.has(k(room, b))) names.push(state.taken.get(k(room, b)));
+    $('doneTitle').textContent = 'Кімната ' + room + ' · місце ' + bed;
+    $('doneText').textContent = (state.mine.existing ? 'Ти вже обрав(-ла) це місце раніше — обрати можна лише одне. ' : '') +
+      (names.length ? 'Ти живеш із: ' + names.join(', ') + '. Ключ отримаєш на рецепції при заселенні.' : 'Поки ти тут сам(а) — клич друзів у вільні ліжка цього номера.');
+    return show('cardDone');
+  }
+  if (!state.sel) return show('cardHow');
+  const { room, bed } = state.sel;
+  const cap = ALL.find(r => r[0] === room)[1];
+  const mates = []; let freeLeft = 0;
+  for (let b = 1; b <= cap; b++) {
+    const n = state.taken.get(k(room, b));
+    if (n !== undefined) mates.push({ n, b }); else if (b !== bed) freeLeft++;
+  }
+  $('pickTag').textContent = 'Кімната ' + room + ' · місце ' + bed;
+  $('pickTitle').textContent = mates.length ? 'Твої сусіди' : 'Порожній номер';
+  $('pickMates').innerHTML = mates.length
+    ? mates.map(m => `<div class="mate"><span class="av">${esc(initials(m.n))}</span><span class="nm">${esc(SHOW_NAMES ? m.n : 'зайнято')}</span><span class="bd">ліжко ${m.b}</span></div>`).join('')
+    : '<p class="empty">Тут поки нікого. Займай місце й клич друзів у сусідні ліжка.</p>';
+  $('pickFree').textContent = freeLeft;
+  $('pickCap').textContent = cap;
+  show('cardPick');
+}
+
+// ----- Події -----
+$('tabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-floor]'); if (!b) return;
+  state.floor = +b.dataset.floor; render();
+});
+document.querySelector('.plan').addEventListener('click', e => {
+  const b = e.target.closest('.bed.free'); if (!b || b.disabled) return;
+  state.sel = { room: b.dataset.room, bed: +b.dataset.bed };
+  $('bookErr').textContent = '';
+  render();
+  if (innerWidth < 960) $('cardPick').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+$('pickClose').addEventListener('click', () => { state.sel = null; render(); });
+$('doneOther').addEventListener('click', () => { state.mine = null; state.sel = null; lsSet(MY_HOTEL, null); lsSet(ME_KEY, null); $('first').value = ''; $('last').value = ''; render(); });
+
+$('bookForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const raw = $('first').value + $('last').value;
+  const first = cleanName($('first').value), last = cleanName($('last').value);
+  if (!first || !last) {
+    $('bookErr').textContent = /[А-Яа-яЇїІіЄєҐґ]/.test(raw)
+      ? 'Будь ласка, пиши латиницею (напр. Sofiia Kholod), не кирилицею.'
+      : "Введи ім'я та прізвище латинськими літерами.";
+    return;
+  }
+  const { room, bed } = state.sel;
+  $('bookBtn').disabled = true; $('bookBtn').textContent = 'Зберігаю…'; $('bookErr').textContent = '';
+  try {
+    const res = await apiPost({ first, last, room, bed });
+    if (res.taken) setTaken(res.taken);
+    lsSet(ME_KEY, { first, last });
+    if (res.ok) {
+      state.mine = { room: String(res.room), bed: Number(res.bed) }; state.sel = null;
+      lsSet(MY_HOTEL, { first, last });
+    } else if (res.error === 'already') {
+      state.mine = { room: String(res.room), bed: Number(res.bed), existing: true }; state.sel = null;
+      lsSet(MY_HOTEL, { first, last });
+      const fl = FLOORS.findIndex(f => f.top.concat(f.bottom).some(r => r[0] === state.mine.room)); if (fl >= 0) state.floor = fl;
+    } else if (res.error === 'taken') {
+      state.sel = null;
+      render();
+      showBad('Хтось щойно зайняв це ліжко. Обери інше.', true);
+      return;
+    } else if (res.error === 'busy') {
+      $('bookErr').textContent = 'Сервер зайнятий, спробуй ще раз за кілька секунд.';
+    } else if (res.error === 'bad_seat') {
+      $('bookErr').textContent = 'Сервер не знає такої кімнати. Скажи організаторам, що треба оновити скрипт.';
+    } else {
+      $('bookErr').textContent = 'Помилка: ' + res.error;
+    }
+    render();
+  } catch (err) {
+    $('bookErr').textContent = "Не вдалося з'єднатися з сервером. Спробуй ще раз.";
+  } finally {
+    $('bookBtn').disabled = false; $('bookBtn').textContent = 'Займаю місце';
+  }
+});
+
+let badTimer;
+function showBad(msg, temp) {
+  $('badNote').textContent = msg; $('badNote').classList.remove('hidden');
+  clearTimeout(badTimer); if (temp) badTimer = setTimeout(() => $('badNote').classList.add('hidden'), 6000);
+}
+
+// ----- Старт -----
+(async function init() {
+  $('city').textContent = HOTEL_CITY;
+  if (DEMO) $('demoNote').classList.remove('hidden');
+  const me = lsGet(ME_KEY);
+  if (me && me.first) { $('first').value = me.first; $('last').value = me.last; }
+  render();
+  try {
+    const r = await apiGet();
+    if (!r.ok || !r.rooms) { showBad('Поселення ще не підключене до таблиці: організаторам треба оновити Apps Script (нова версія розгортання).'); return; }
+    setTaken(r.taken);
+    // Відновити «моє місце», якщо людина вже бронювала з цього браузера
+    const my = lsGet(MY_HOTEL);
+    if (my) {
+      const res = await apiPost({ action: 'check', first: my.first, last: my.last });
+      if (res.ok && res.room) {
+        state.mine = { room: String(res.room), bed: Number(res.bed), existing: true };
+        const fl = FLOORS.findIndex(f => f.top.concat(f.bottom).some(x => x[0] === state.mine.room)); if (fl >= 0) state.floor = fl;
+      }
+      if (res.taken) setTaken(res.taken);
+    }
+  } catch (e) {
+    showBad("Не вдалося завантажити кімнати. Перевір інтернет і онови сторінку.");
+  }
+  render();
+})();
+</script>
+</body>
+</html>

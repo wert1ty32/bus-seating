@@ -59,7 +59,8 @@ function publicTaken_(rows) {
   return rows.map(r => ({ seat: r.seat, name: r.last + ' ' + r.first }));
 }
 
-function doGet() {
+function doGet(e) {
+  if (e && e.parameter && e.parameter.kind === 'hotel') return hotelGet_();
   const rows = readRows_(getSheet_());
   return json_({ ok: true, total: TOTAL_SEATS, blocked: BLOCKED_SEATS, taken: publicTaken_(rows) });
 }
@@ -68,6 +69,7 @@ function doPost(e) {
   let data;
   try { data = JSON.parse(e.postData.contents); }
   catch (err) { return json_({ ok: false, error: 'bad_request' }); }
+  if (data.kind === 'hotel') return hotelPost_(data);
 
   const first = cleanName_(data.first);
   const last = cleanName_(data.last);
@@ -99,6 +101,83 @@ function doPost(e) {
     SpreadsheetApp.flush();
     rows.push({ seat, first, last, key });
     return json_({ ok: true, seat, first, last, taken: publicTaken_(rows) });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ===================== ГОТЕЛЬ ===================== */
+
+const HOTEL_SHEET = 'Поселення';
+// Номер кімнати → кількість ліжок. Має збігатися з ROOMS у hotel.html.
+const HOTEL_ROOMS = {
+  '1': 2, '2': 3, '3': 4, '4': 2, '5': 3, '6': 4, '7': 2, '8': 3, '9': 3, '10': 2,
+  '11': 3, '12': 2, '13': 4, '14': 2, '15': 3, '16': 3, '17': 4, '18': 2, '19': 3, '20': 2,
+};
+
+function hotelSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(HOTEL_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(HOTEL_SHEET);
+    sh.appendRow(['Час', 'Кімната', 'Ліжко', 'Прізвище', "Ім'я", 'Ключ']);
+    sh.setFrozenRows(1);
+    sh.getRange('A1:F1').setFontWeight('bold');
+  }
+  return sh;
+}
+
+function hotelRows_(sh) {
+  const last = sh.getLastRow();
+  if (last < 2) return [];
+  return sh.getRange(2, 1, last - 1, 6).getValues()
+    .filter(r => r[1] !== '' && r[1] !== null)
+    .map(r => ({
+      room: String(r[1]),
+      bed: Number(r[2]),
+      last: String(r[3]),
+      first: String(r[4]),
+      key: String(r[5] || makeKey_(r[4], r[3])),
+    }));
+}
+
+function hotelPublic_(rows) {
+  return rows.map(r => ({ room: r.room, bed: r.bed, name: r.last + ' ' + r.first }));
+}
+
+function hotelGet_() {
+  return json_({ ok: true, rooms: HOTEL_ROOMS, taken: hotelPublic_(hotelRows_(hotelSheet_())) });
+}
+
+function hotelPost_(data) {
+  const first = cleanName_(data.first);
+  const last = cleanName_(data.last);
+  if (!first || !last) return json_({ ok: false, error: 'bad_name' });
+  const key = makeKey_(first, last);
+  const room = String(data.room || '');
+  const bed = Number(data.bed);
+
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return json_({ ok: false, error: 'busy' });
+  try {
+    const sh = hotelSheet_();
+    const rows = hotelRows_(sh);
+    const mine = rows.find(r => r.key === key);
+
+    if (data.action === 'check') {
+      return json_({ ok: true, room: mine ? mine.room : null, bed: mine ? mine.bed : null, taken: hotelPublic_(rows) });
+    }
+    if (mine) return json_({ ok: false, error: 'already', room: mine.room, bed: mine.bed, taken: hotelPublic_(rows) });
+    const cap = HOTEL_ROOMS[room];
+    if (!cap || !Number.isInteger(bed) || bed < 1 || bed > cap) return json_({ ok: false, error: 'bad_seat' });
+    if (rows.some(r => r.room === room && r.bed === bed)) {
+      return json_({ ok: false, error: 'taken', taken: hotelPublic_(rows) });
+    }
+
+    sh.appendRow([new Date(), room, bed, last, first, key]);
+    SpreadsheetApp.flush();
+    rows.push({ room, bed, first, last, key });
+    return json_({ ok: true, room, bed, first, last, taken: hotelPublic_(rows) });
   } finally {
     lock.releaseLock();
   }
